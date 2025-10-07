@@ -11,7 +11,6 @@ A tiny Bash daemon that shows a **full-screen slideshow from your folders when y
 * Random order (shuffle) and robust extension filter using `find -regextype posix-extended`. ([GNU][4])
 * Ships with sensible defaults; easy to tweak.
 
----
 
 ## Requirements
 
@@ -24,7 +23,6 @@ sudo apt install imv wmctrl dbus libglib2.0-bin findutils
 * `dbus` & `gdbus` are used to query Mutter’s IdleMonitor. ([Dgit Debian Browser][1])
 * `findutils` for the regex-based file scan. ([GNU][4])
 
----
 
 ## Install
 
@@ -45,7 +43,6 @@ Exec=/home/$USER/.local/bin/wayland-slideshow.sh
 X-GNOME-Autostart-enabled=true
 ```
 
----
 
 ## Configuration
 
@@ -77,7 +74,6 @@ title_text = Idle Slideshow
 
 (See `imv(5)` for config keys.) ([Arch Manual Pages][5])
 
----
 
 ## How it works
 
@@ -85,7 +81,6 @@ title_text = Idle Slideshow
 * File list is built with `find -regextype posix-extended -iregex '.*\.(jpg|png|…)$'` (case-insensitive, NUL-safe). ([GNU][4])
 * On Wayland, “always on top” is applied by launching **imv-x11** (XWayland) and then setting EWMH flags with `wmctrl` (`_NET_WM_STATE_ABOVE`, fullscreen). Pure Wayland windows don’t expose global stacking control; `wmctrl` only targets X11/XWayland. ([FreeDesktop.org][3])
 
----
 
 ## Quick test
 
@@ -110,7 +105,6 @@ dbus-send --print-reply --dest=org.gnome.Mutter.IdleMonitor \
 
 (Should return `uint64 <milliseconds>`.) ([Stack Overflow][6])
 
----
 
 ## Troubleshooting
 
@@ -131,7 +125,6 @@ That flag is an X11 EWMH state. It applies to X11/XWayland windows; native Wayla
 **Ordering looks odd**
 In “natural” mode, order comes from the OS/filesystem. For random order, keep `ORDER="shuffle"`. If you need strict numeric sorting, pre-build the list and pass it to `imv -t`. (imv also has `imv-dir`, but we drive our own list for full control.) ([Arch Manual Pages][7])
 
----
 
 ## Advanced
 
