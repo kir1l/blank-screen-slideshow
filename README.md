@@ -135,8 +135,6 @@ In “natural” mode, order comes from the OS/filesystem. For random order, kee
   * Lower CPU when idle → increase `CHECK_EVERY_IDLE` (e.g., `1.0`).
 * **Multiple sources:** add more folders to `DIRS=( … )`.
 
----
-
 ## License
 
 MIT (or Unlicense) — your call.
