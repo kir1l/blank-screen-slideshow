@@ -4,11 +4,11 @@ set -euo pipefail
 # -------- CONFIG --------
 DIRS=( "$HOME/Pictures/DigitalArt" )   # можно несколько папок
 
-IDLE_LIMIT_MS=$((1*10*1000))           # порог простоя (мс); сейчас 10 сек для теста
-DURATION=8                              # сек на кадр
+IDLE_LIMIT_MS=$((5*60*1000))            # порог простоя (мс);
+DURATION=30                             # сек на кадр
 ORDER="shuffle"                         # "shuffle" или "natural"
 TITLE="Idle Slideshow"                  # заголовок окна imv
-SCALING=full                            # full | crop | shrink | none
+SCALING=crop                            # full | crop | shrink | none
 ALWAYS_ON_TOP=1                         # включить "над всеми"
 
 # NEW: раздельные интервалы опроса
