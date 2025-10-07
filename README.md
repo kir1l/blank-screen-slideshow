@@ -1,6 +1,3 @@
-Here’s a clean English README you can drop into your repo.
-
----
 
 # Idle Slideshow for GNOME (Ubuntu)
 
