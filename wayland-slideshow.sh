@@ -11,11 +11,11 @@ TITLE="Idle Slideshow"                  # заголовок окна imv
 SCALING=crop                            # full | crop | shrink | none
 ALWAYS_ON_TOP=1                         # включить "над всеми"
 
-# NEW: раздельные интервалы опроса
 CHECK_EVERY_IDLE=0.5                    # когда ждём простоя (сек)
 CHECK_EVERY_ACTIVE=0.08                 # когда слайд-шоу запущено (сек)
 ACTIVE_EDGE_MS=500                      # считаем пользователя активным, если idle < 500 мс
 
+RESPECT_INHIBITORS=1
 EXTS="jpg|jpeg|png|webp|gif|bmp|tif|tiff|avif"
 PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/slideshow-imv.pid"
 # ------------------------
@@ -41,6 +41,33 @@ choose_viewer() {
 }
 
 VIEWER="$(choose_viewer)" || { log "imv(-wayland/-x11) не найден."; exit 1; }
+
+is_idle_inhibited() {
+  [[ "${RESPECT_INHIBITORS:-0}" -eq 1 ]] || return 1
+
+  # GNOME SessionManager inhibitors → ищем флаг idle (бит 8)
+  local paths flags
+  paths=$(dbus-send --print-reply --dest=org.gnome.SessionManager \
+            /org/gnome/SessionManager org.gnome.SessionManager.GetInhibitors \
+          | awk -F\" '/object path/ {print $2}')
+  for p in $paths; do
+    flags=$(dbus-send --print-reply --dest=org.gnome.SessionManager \
+              "$p" org.gnome.SessionManager.Inhibitor.GetFlags 2>/dev/null \
+            | awk '/uint32/ {print $2}')
+    # 8 — «Inhibit the session being marked as idle»
+    if [[ -n "$flags" ]] && (( (flags & 8) != 0 )); then
+      return 0
+    fi
+  done
+
+  # Доп.: inhibitors через systemd-logind (покрывает часть приложений)
+  if command -v systemd-inhibit >/dev/null 2>&1; then
+    systemd-inhibit --list 2>/dev/null | grep -qiE '(^|\s)idle(\s|,).*block' && return 0
+  fi
+
+  return 1
+}
+
 
 mark_above() {
   # Работает для X11/XWayland-окон
@@ -105,22 +132,24 @@ running=0
 while :; do
   idle_ms="$(get_idle_ms)"; idle_ms="${idle_ms:-0}"
 
-  if (( running == 0 )); then
-    # ждём простоя → опрашиваем реже
+   if (( running == 0 )); then
+    # если сейчас кто-то держит inhibit idle (браузер/видео) — ничего не делаем
+    if is_idle_inhibited; then
+      sleep "$CHECK_EVERY_IDLE"
+      continue
+    fi
     if (( idle_ms >= IDLE_LIMIT_MS )); then
       start_show
       running=1
-      # маленькая задержка, чтобы wmctrl успел навесить флаги
       sleep 0.05
     else
       sleep "$CHECK_EVERY_IDLE"
     fi
   else
-    # слайд-шоу идёт → опрашиваем чаще и закрываем мгновенно при активности
-    if (( idle_ms < ACTIVE_EDGE_MS )); then
+    # если во время показа появился inhibit (видео запустили) — сразу закрываем
+    if is_idle_inhibited || (( idle_ms < ACTIVE_EDGE_MS )); then
       stop_show
       running=0
-      # короткий анти-дребезг
       sleep 0.05
     else
       sleep "$CHECK_EVERY_ACTIVE"
